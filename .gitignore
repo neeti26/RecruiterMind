@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Model cache (large, re-downloaded automatically)
+.cache/
+~/.cache/huggingface/
+
+# Node
+dashboard/node_modules/
+dashboard/dist/
+dashboard/.env
+
+# Output files (generated at runtime)
+output/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp

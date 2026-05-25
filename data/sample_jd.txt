@@ -1,0 +1,37 @@
+Senior Machine Learning Engineer — AI Platform Team
+
+About the Role:
+We're looking for a Senior ML Engineer to join our AI Platform team. You'll be building the infrastructure and models that power our recommendation and personalization systems at scale. This isn't a research role — we need someone who can take models from prototype to production and keep them running reliably.
+
+What You'll Do:
+- Design, train, and deploy large-scale ML models (recommendation, ranking, NLP)
+- Build and maintain ML pipelines using Airflow, Spark, and Kubernetes
+- Collaborate with data scientists to productionize their models
+- Improve model monitoring, A/B testing frameworks, and feature stores
+- Mentor junior engineers and contribute to technical roadmap
+
+What We're Looking For:
+Required:
+- 5+ years of experience in machine learning engineering or data science
+- Strong Python skills — you write clean, testable, production-grade code
+- Experience with PyTorch or TensorFlow for model training
+- Hands-on experience with MLOps: model serving, monitoring, CI/CD for ML
+- Experience with distributed computing (Spark, Ray, or Dask)
+- Solid understanding of SQL and data warehousing concepts
+- Experience deploying models on cloud platforms (AWS, GCP, or Azure)
+
+Nice to Have:
+- Experience with LLMs, RAG systems, or vector databases
+- Contributions to open-source ML projects
+- Experience with Kubernetes and Docker for ML workloads
+- Knowledge of recommendation systems or ranking algorithms
+- Publications or blog posts on ML topics
+
+The Ideal Candidate:
+You've shipped ML models to production before and know the pain points. You care about reliability and scalability, not just model accuracy. You can communicate technical decisions to non-technical stakeholders. You're comfortable with ambiguity and can drive projects independently.
+
+Team Culture:
+- Fast-moving, high-ownership environment
+- Strong engineering culture — code reviews, testing, documentation matter
+- Remote-friendly with async-first communication
+- We value learning and give time for exploration
