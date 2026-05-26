@@ -122,6 +122,8 @@ class PlackettLuceAggregator:
 
     def get_final_ranking(self) -> List[Tuple[str, float]]:
         """Return candidates sorted by aggregated PL score."""
+        if not self.scores:
+            return []
         # Normalize by appearances to handle unequal tournament participation
         normalized = {
             cid: score / max(1, self.appearances[cid])
@@ -197,6 +199,10 @@ class TournamentReranker:
 
         # Get final PL ranking
         pl_ranking = aggregator.get_final_ranking()
+        if not pl_ranking:
+            logger.warning("No tournament rounds completed — returning score-based ranking")
+            return candidates
+
         pl_scores = {cid: score for cid, score in pl_ranking}
 
         # Sort tournament pool by PL score

@@ -67,11 +67,11 @@ class ScoringWeights:
 class TournamentConfig:
     """LLM Listwise Tournament settings."""
     # Candidates per mini-tournament
-    tournament_size: int = 5
+    tournament_size: int = 3
     # Number of tournament rounds (more = more stable)
-    num_rounds: int = 3
+    num_rounds: int = 1
     # Top-N to run through tournament (rest ranked by score)
-    tournament_top_n: int = 20
+    tournament_top_n: int = 10
     # Temperature for LLM ranking (lower = more deterministic)
     llm_temperature: float = 0.1
 
