@@ -72,6 +72,18 @@ def get_cross_encoder():
     return _cross_encoder
 
 
+@app.on_event("startup")
+async def startup_event():
+    """Pre-warm models synchronously so first WebSocket request is fast."""
+    import asyncio
+    loop = asyncio.get_event_loop()
+    logger.info("Pre-warming models (this takes ~30s on first run)...")
+    await loop.run_in_executor(None, get_embedder)
+    await loop.run_in_executor(None, get_llm)
+    await loop.run_in_executor(None, get_cross_encoder)
+    logger.info("All models ready.")
+
+
 # ── Pydantic schemas ──────────────────────────────────────────────────────────
 
 class WeightAdjustRequest(BaseModel):
