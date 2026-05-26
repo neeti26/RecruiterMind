@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Upload, FileText, Play, Sparkles, AlertCircle, ChevronRight } from 'lucide-react'
+import { Upload, FileText, Play, Sparkles, AlertCircle, EyeOff, Eye } from 'lucide-react'
 
 const SAMPLE_JD = `Senior Machine Learning Engineer — AI Platform Team
 
@@ -40,6 +40,7 @@ export default function InputPanel({ onSubmit }) {
   const [csvName, setCsvName] = useState('')
   const [csvRows, setCsvRows] = useState(0)
   const [dragOver, setDragOver] = useState(false)
+  const [anonMode, setAnonMode] = useState(false)
   const fileRef = useRef()
 
   const handleFile = (file) => {
@@ -168,20 +169,34 @@ export default function InputPanel({ onSubmit }) {
           </motion.div>
 
           {/* Submit */}
-          <motion.button
-            onClick={() => onSubmit({ jdText, candidatesCSV: csvContent })}
-            disabled={!canSubmit}
-            whileHover={canSubmit ? { scale: 1.01 } : {}}
-            whileTap={canSubmit ? { scale: 0.99 } : {}}
-            className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-semibold text-sm transition-all
-              ${canSubmit
-                ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
-                : 'bg-[#1e2535] text-slate-600 cursor-not-allowed border border-[#2a3347]'}`}
-          >
-            <Play size={14} />
-            Run AI Pipeline
-            {canSubmit && <span className="text-indigo-300 font-normal text-xs">· {csvRows || 20} candidates</span>}
-          </motion.button>
+          <div className="flex items-center gap-3">
+            {/* Anonymous mode toggle */}
+            <button
+              onClick={() => setAnonMode(v => !v)}
+              title="Anonymous Mode: masks names, locations, and demographic signals for unbiased ranking"
+              className={`flex items-center gap-1.5 px-3 py-3.5 rounded-xl border text-xs font-medium transition-all flex-shrink-0
+                ${anonMode
+                  ? 'bg-slate-600/20 border-slate-500/30 text-slate-300'
+                  : 'bg-[#1e2535] border-[#2a3347] text-slate-500 hover:text-slate-400'}`}>
+              {anonMode ? <EyeOff size={13} /> : <Eye size={13} />}
+              {anonMode ? 'Anon ON' : 'Anon'}
+            </button>
+
+            <motion.button
+              onClick={() => onSubmit({ jdText, candidatesCSV: csvContent, anonymousMode: anonMode })}
+              disabled={!canSubmit}
+              whileHover={canSubmit ? { scale: 1.01 } : {}}
+              whileTap={canSubmit ? { scale: 0.99 } : {}}
+              className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-semibold text-sm transition-all
+                ${canSubmit
+                  ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+                  : 'bg-[#1e2535] text-slate-600 cursor-not-allowed border border-[#2a3347]'}`}
+            >
+              <Play size={14} />
+              Run AI Pipeline
+              {canSubmit && <span className="text-indigo-300 font-normal text-xs">· {csvRows || 20} candidates</span>}
+            </motion.button>
+          </div>
         </div>
 
         {/* Right: pipeline explainer (2 cols) */}

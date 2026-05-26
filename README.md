@@ -1,151 +1,243 @@
-# RecruiterMind — AI Candidate Ranking System
+# RecruiterMind 🧠
 
-> **Hack2Skill India Runs 2026 — Data & AI Challenge**
+> **Hack2Skill India Runs 2026 — Data & AI Challenge**  
+> AI candidate ranking that thinks like a great recruiter — not a keyword filter.
 
-RecruiterMind ranks candidates the way a great recruiter would: not by keyword overlap, but by deeply understanding career trajectory, skill depth, behavioral signals, and role fit — then explaining every decision.
+**Live Demo:** https://recruitermind.vercel.app  
+**GitHub:** https://github.com/neeti26/RecruiterMind
 
 ---
 
-## Architecture Overview
+## Architecture
 
 ```
-Job Description
-      │
-      ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Stage 0 — JD Intelligence                                      │
-│  LLM extracts: required skills, nice-to-have, seniority,        │
-│  culture signals, implicit needs, deal-breakers                 │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Stage 1 — Candidate Profiling                                  │
-│  Parse resume/profile → structured JSON:                        │
-│  skills taxonomy, career velocity, tenure patterns,             │
-│  seniority trajectory, domain depth, platform signals           │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Stage 2 — Hybrid Retrieval (Recall Layer)                      │
-│  Dense: nomic-embed-text-v1.5 + FAISS ANN search               │
-│  Sparse: BM25 keyword retrieval                                 │
-│  Fusion: Reciprocal Rank Fusion → top-K candidates             │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Stage 3 — Multi-Dimensional Scoring (Precision Layer)          │
-│  7 independent scoring dimensions:                              │
-│  1. Technical Skill Match (semantic + taxonomy)                 │
-│  2. Career Trajectory Score (velocity + growth arc)             │
-│  3. Domain Depth Score (years × breadth × recency)             │
-│  4. Seniority Alignment (level fit, not over/under)             │
-│  5. Behavioral Signal Score (platform activity, contributions)  │
-│  6. Culture & Soft Skill Fit (LLM-inferred)                    │
-│  7. Risk Penalty (job-hopping, gaps, red flags)                 │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Stage 4 — LLM Listwise Tournament Reranker                     │
-│  Mini-tournaments of 5 candidates at a time                     │
-│  LLM produces ranked permutations                               │
-│  Plackett-Luce aggregation → final stable ranking               │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Stage 5 — Explainability & Bias Audit                          │
-│  Per-candidate recruiter narrative                              │
-│  Dimension breakdown radar chart                                │
-│  Bias detection (gender/age/name neutralization)                │
-│  Confidence intervals on scores                                 │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-                  Ranked Output CSV + HTML Report
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         RecruiterMind Pipeline                          │
+│                                                                         │
+│  Job Description                    Candidates CSV                      │
+│       │                                   │                             │
+│       ▼                                   ▼                             │
+│  ┌─────────────┐               ┌──────────────────┐                    │
+│  │ Stage 0     │               │ Stage 1           │                    │
+│  │ JD Intel    │               │ Candidate         │                    │
+│  │ LLM extracts│               │ Profiler          │                    │
+│  │ implicit    │               │ + PII Masker      │                    │
+│  │ needs,      │               │ + Timeline        │                    │
+│  │ culture,    │               │   Validator       │                    │
+│  │ deal-breakers│              └────────┬─────────┘                    │
+│  └──────┬──────┘                        │                              │
+│         │                               │                              │
+│         └──────────────┬────────────────┘                              │
+│                        ▼                                                │
+│              ┌──────────────────┐                                       │
+│              │ Stage 2          │                                       │
+│              │ Semantic Embed   │  nomic-embed-text-v1.5 (768-dim)     │
+│              │ + Disk Cache     │  Matryoshka embeddings               │
+│              └────────┬─────────┘                                       │
+│                       │                                                 │
+│                       ▼                                                 │
+│              ┌──────────────────┐                                       │
+│              │ Stage 3          │  Dense:  FAISS IVF (cosine)          │
+│              │ Hybrid Retrieval │  Sparse: BM25 (Okapi)                │
+│              │ FAISS + BM25     │  Fusion: Reciprocal Rank Fusion      │
+│              │ + RRF Fusion     │                                       │
+│              └────────┬─────────┘                                       │
+│                       │                                                 │
+│                       ▼                                                 │
+│              ┌──────────────────┐                                       │
+│              │ Stage 4          │  ms-marco-MiniLM-L6-v2               │
+│              │ Cross-Encoder    │  Full attention over (JD, Resume)    │
+│              │ Reranking        │  Dramatically improves top-10 order  │
+│              └────────┬─────────┘                                       │
+│                       │                                                 │
+│                       ▼                                                 │
+│              ┌──────────────────┐                                       │
+│              │ Stage 5          │  7 independent dimensions:           │
+│              │ Multi-Dim        │  Skills · Career · Domain ·          │
+│              │ Scoring          │  Seniority · Behavioral ·            │
+│              │                  │  Culture · Risk Penalty              │
+│              └────────┬─────────┘                                       │
+│                       │                                                 │
+│                       ▼                                                 │
+│              ┌──────────────────┐                                       │
+│              │ Stage 6          │  Mini-tournaments of 5 candidates    │
+│              │ LLM Tournament   │  Plackett-Luce aggregation           │
+│              │ (optional)       │  Requires GROQ_API_KEY               │
+│              └────────┬─────────┘                                       │
+│                       │                                                 │
+│                       ▼                                                 │
+│              ┌──────────────────┐                                       │
+│              │ Stage 7          │  3-bullet fit verdicts               │
+│              │ Explainability   │  Bias audit + variance check         │
+│              │ + Bias Audit     │  Timeline discrepancy flags          │
+│              └────────┬─────────┘                                       │
+│                       │                                                 │
+│                       ▼                                                 │
+│         Ranked CSV + Interactive React Dashboard                        │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Key Differentiators
 
-| Feature | Toy Models | RecruiterMind |
+| Feature | Standard Approach | RecruiterMind |
 |---|---|---|
-| JD Understanding | Keyword extraction | LLM semantic decomposition with implicit needs |
-| Candidate Scoring | Single cosine similarity | 7-dimensional weighted scoring |
-| Ranking Method | Sort by score | LLM listwise tournament + Plackett-Luce |
-| Explainability | Per-candidate recruiter narrative | ✅ |
-| Bias Handling | None | Active neutralization + audit trail |
-| Career Intelligence | None | Velocity, trajectory, tenure pattern analysis |
-| Output | CSV | CSV + interactive HTML report |
+| JD Understanding | Keyword extraction | LLM semantic decomposition — implicit needs, culture signals, deal-breakers |
+| Retrieval | Single cosine similarity | Hybrid FAISS + BM25 + Reciprocal Rank Fusion |
+| Ranking Precision | Sort by embedding score | Cross-encoder reranking (full attention over JD+Resume pairs) |
+| Scoring | 1 number | 7 independent dimensions with configurable weights |
+| LLM Ranking | None | Listwise tournament + Plackett-Luce aggregation |
+| Explainability | None | 3-bullet fit verdict per candidate (Pros / Gaps / Culture) |
+| Bias | None | PII masking, anonymous mode, demographic neutralization |
+| Trust | None | Timeline discrepancy detection — flags experience inflation |
+| UI | Static table | Interactive: weight sliders, shortlist, sort/filter, instant rerank |
+| Output | Basic CSV | Rich CSV with 20+ columns including `primary_fit_reason` |
 
 ---
 
 ## Quick Start
 
+### Option 1: Docker (recommended)
+
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+git clone https://github.com/neeti26/RecruiterMind.git
+cd RecruiterMind
 
-# Run the full pipeline
-python main.py \
-  --jd data/job_description.txt \
-  --candidates data/candidates.csv \
-  --output output/ranked_candidates.csv \
-  --report output/report.html
+# Optional: add LLM key for tournament reranking
+echo "GROQ_API_KEY=gsk_..." > .env
 
-# Or use the interactive demo
-python demo.py
+docker-compose up --build
+# Open http://localhost:8000
 ```
+
+### Option 2: Local
+
+```bash
+# Backend
+pip install -r requirements.txt
+uvicorn api:app --host 0.0.0.0 --port 8000 --reload
+
+# Frontend (separate terminal)
+cd dashboard
+npm install
+npm run dev
+# Open http://localhost:5173
+```
+
+### Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `GROQ_API_KEY` | Optional | Enables LLM tournament reranking (free tier at console.groq.com) |
+| `OPENAI_API_KEY` | Optional | Alternative LLM provider (GPT-4o) |
+| `EMBEDDING_CACHE_DIR` | Optional | Path for embedding cache (default: `.cache/embeddings`) |
+
+---
+
+## Usage
+
+1. Paste a job description (the more detail, the better)
+2. Upload your candidates CSV (or use the built-in sample)
+3. Toggle **Anonymous Mode** for bias-free ranking
+4. Click **Run AI Pipeline** — watch the 8 stages execute live
+5. Explore results: adjust weight sliders, shortlist candidates, export CSV
+
+### CSV Format
+
+```
+id, name, current_title, years_experience, skills, location,
+github_repos, github_stars, open_source_contributions,
+publications, blog_posts, certifications, summary
+```
+
+---
+
+## Output CSV Columns
+
+| Column | Description |
+|---|---|
+| `rank` | Final ranking position |
+| `final_score_pct` | Weighted composite score (0–100%) |
+| `hire_recommendation` | strong_yes / yes / maybe / no |
+| `confidence_pct` | Model confidence in the score |
+| `trust_score_pct` | Timeline validation trust (100% = no discrepancies) |
+| `has_discrepancy` | YES if timeline inconsistency detected |
+| `tech_skills_pct` | Technical skill match score |
+| `career_traj_pct` | Career trajectory score |
+| `domain_depth_pct` | Domain depth score |
+| `seniority_fit_pct` | Seniority alignment score |
+| `behavioral_pct` | Behavioral signals score |
+| `culture_fit_pct` | Culture fit score |
+| `risk_penalty_pct` | Risk penalty |
+| `cross_encoder_pct` | Cross-encoder precision score |
+| `matched_skills` | Required skills the candidate has |
+| `missing_skills` | Required skills the candidate lacks |
+| `critical_gaps` | High-priority missing skills |
+| `primary_fit_reason` | AI-generated one-line fit summary |
+| `key_strength` | Single most compelling attribute |
+| `key_concern` | Single biggest concern |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Embeddings | `nomic-embed-text-v1.5` (MTEB SOTA, 768-dim, Matryoshka) |
+| Dense Search | FAISS (IndexFlatIP / IVF) |
+| Sparse Search | BM25 Okapi (rank-bm25) |
+| Fusion | Reciprocal Rank Fusion |
+| Cross-Encoder | `cross-encoder/ms-marco-MiniLM-L6-v2` |
+| LLM | Groq Llama-3.3-70B / OpenAI GPT-4o |
+| Backend | FastAPI + WebSocket streaming |
+| Frontend | React 19 + Vite + Tailwind v4 + Framer Motion + Recharts |
+| Caching | Disk-backed SHA256 embedding cache |
+| Deployment | Vercel (frontend) + Docker (backend) |
 
 ---
 
 ## Project Structure
 
 ```
-recruiter_mind/
-├── main.py                    # Entry point
-├── demo.py                    # Interactive demo
-├── config.py                  # Configuration & weights
+RecruiterMind/
+├── api.py                        # FastAPI backend, WebSocket pipeline
+├── config.py                     # All tunable parameters
+├── Dockerfile                    # Production container
+├── docker-compose.yml            # One-command local setup
+├── requirements.txt
 ├── pipeline/
-│   ├── jd_intelligence.py     # Stage 0: JD parsing
-│   ├── candidate_profiler.py  # Stage 1: Candidate parsing
-│   ├── hybrid_retrieval.py    # Stage 2: FAISS + BM25 + RRF
-│   ├── multi_dim_scorer.py    # Stage 3: 7-dimension scoring
-│   ├── tournament_reranker.py # Stage 4: LLM tournament
-│   └── explainer.py           # Stage 5: Explanations + bias
+│   ├── jd_intelligence.py        # Stage 0: LLM JD analysis
+│   ├── candidate_profiler.py     # Stage 1: Profile parsing
+│   ├── pii_masker.py             # Anonymous mode / PII redaction
+│   ├── timeline_validator.py     # Discrepancy detection
+│   ├── embedding_cache.py        # Disk-backed embedding cache
+│   ├── hybrid_retrieval.py       # Stage 3: FAISS + BM25 + RRF
+│   ├── multi_dim_scorer.py       # Stage 5: 7-dimension scoring
+│   ├── tournament_reranker.py    # Stage 6: LLM tournament
+│   └── explainer.py              # Stage 7: Fit verdicts + bias audit
 ├── models/
-│   ├── embedder.py            # nomic-embed-text-v1.5 wrapper
-│   └── llm_client.py          # LLM API abstraction
+│   ├── embedder.py               # nomic-embed-text-v1.5 wrapper
+│   ├── cross_encoder.py          # ms-marco cross-encoder
+│   └── llm_client.py             # OpenAI / Groq abstraction
 ├── utils/
-│   ├── skill_taxonomy.py      # Skills ontology
-│   ├── career_analyzer.py     # Career trajectory logic
-│   └── report_generator.py    # HTML report
-└── data/
-    ├── sample_jd.txt
-    └── sample_candidates.csv
+│   ├── skill_taxonomy.py         # Skills ontology + normalization
+│   └── career_analyzer.py        # Career trajectory analysis
+├── data/
+│   ├── sample_jd.txt
+│   └── sample_candidates.csv
+└── dashboard/                    # React frontend
+    ├── src/
+    │   ├── App.jsx
+    │   └── components/
+    │       ├── ResultsDashboard.jsx
+    │       ├── WeightSliders.jsx   # Dynamic weight adjustment
+    │       ├── FitVerdict.jsx      # 3-bullet AI verdict
+    │       ├── DiscrepancyBadge.jsx # Timeline flags
+    │       ├── PipelineProgress.jsx
+    │       ├── InputPanel.jsx
+    │       ├── ScoreRadar.jsx
+    │       ├── DimensionChart.jsx
+    │       └── BiasAudit.jsx
+    └── vercel.json
 ```
-
----
-
-## Evaluation
-
-The system is evaluated on:
-- **NDCG@10** — ranking quality vs. human expert labels
-- **Precision@5** — top-5 shortlist accuracy
-- **Spearman ρ** — rank correlation with ground truth
-- **Bias Audit Score** — demographic parity check
-
----
-
-## Tech Stack
-
-- **Embeddings**: `nomic-embed-text-v1.5` (MTEB SOTA, open-source)
-- **Vector Search**: FAISS (IVF + HNSW)
-- **Sparse Retrieval**: rank-bm25
-- **LLM**: OpenAI GPT-4o / Groq Llama-3.3-70B (configurable)
-- **Scoring**: NumPy + SciPy
-- **Visualization**: Plotly + Jinja2 HTML reports

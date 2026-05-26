@@ -14,7 +14,7 @@ export default function App() {
   const [error, setError] = useState(null)
   const wsRef = useRef(null)
 
-  const runPipeline = useCallback(({ jdText, candidatesCSV }) => {
+  const runPipeline = useCallback(({ jdText, candidatesCSV, anonymousMode = false }) => {
     setPhase('running')
     setPipelineLog([])
     setResults(null)
@@ -24,7 +24,11 @@ export default function App() {
     wsRef.current = ws
 
     ws.onopen = () => {
-      ws.send(JSON.stringify({ jd_text: jdText, candidates_csv: candidatesCSV }))
+      ws.send(JSON.stringify({
+        jd_text: jdText,
+        candidates_csv: candidatesCSV,
+        anonymous_mode: anonymousMode,
+      }))
     }
 
     ws.onmessage = (e) => {
